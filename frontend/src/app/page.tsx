@@ -4,14 +4,38 @@ import WalletConnect from "@/components/WalletConnect";
 import TaskCard from "@/components/TaskCard";
 import { useContract } from "@/hooks/useContract";
 import { requestAccess } from "@stellar/freighter-api";
+import { useEffect, useCallback } from "react";
 
 export default function Home() {
   const [worker, setWorker] = useState("");
   const [amount, setAmount] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
-  const [demoTask, setDemoTask] = useState<any>(null);
+  const [taskData, setTaskData] = useState<any>(null);
 
-  const { createTask } = useContract();
+  const { createTask, getTask } = useContract();
+
+  // Sabit olarak 1 numaralı görevi çekiyoruz (şimdilik)
+  const fetchTask = useCallback(async () => {
+    try {
+      const data = await getTask(1);
+      if (data) {
+        setTaskData({
+          taskId: 1,
+          employer: data.employer,
+          worker: data.worker,
+          amount: Number(data.amount) / 10_000_000, // Stroops to XLM
+          status: data.status,
+          evidenceHash: data.evidence_hash
+        });
+      }
+    } catch (error) {
+      console.log("Görev henüz oluşturulmamış veya çekilemedi.");
+    }
+  }, [getTask]);
+
+  useEffect(() => {
+    fetchTask();
+  }, [fetchTask]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,17 +52,12 @@ export default function Home() {
 
       await createTask(address, worker, Number(amount));
 
-      setDemoTask({
-        taskId: 1, // Kontrattaki task ID (şimdilik statik 1)
-        employer: address,
-        worker,
-        amount: Number(amount),
-        status: 0 // Açık
-      });
-
       alert("Görev başarıyla oluşturuldu!");
       setWorker("");
       setAmount("");
+
+      // Görev oluşturulduktan sonra veriyi hemen güncelle
+      await fetchTask();
     } catch (error) {
       console.error(error);
       alert("Görev oluşturulurken bir hata oluştu.");
@@ -90,15 +109,16 @@ export default function Home() {
           </button>
         </form>
 
-        {demoTask && (
+        {taskData && (
           <div className="mt-8">
             <h2 className="text-2xl font-bold mb-4 text-center border-t border-gray-800 pt-8">Aktif Görevler</h2>
             <TaskCard
-              taskId={demoTask.taskId}
-              employer={demoTask.employer}
-              worker={demoTask.worker}
-              amount={demoTask.amount}
-              status={demoTask.status}
+              taskId={taskData.taskId}
+              employer={taskData.employer}
+              worker={taskData.worker}
+              amount={taskData.amount}
+              status={taskData.status}
+              evidenceHash={taskData.evidenceHash} // Kanıt eklendiyse karta gönderebilirsiniz (opsiyonel)
             />
           </div>
         )}
