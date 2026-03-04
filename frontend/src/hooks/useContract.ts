@@ -2,27 +2,24 @@ import { Client, networks } from "trust_task";
 import { signTransaction } from "@stellar/freighter-api";
 
 export const useContract = () => {
-    const createTask = async (employer: string, worker: string, amount: number) => {
+    const createTask = async (employer: string, description_cid: string, amount: number) => {
         try {
             const client = new Client({
                 ...networks.testnet,
                 rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org",
             });
 
-            // Call the bindings method
             const tx = await client.create_task(
                 {
                     employer,
-                    worker,
+                    description_cid,
                     amount: BigInt(amount * 10_000_000), // Sabit birim (Stroops) çevrimi
                 },
-                // !!!! Eklenen kısım burası !!!!
                 {
-                    publicKey: employer // İşlemi kim imzalayacaksa onun adresini buraya vermeliyiz
+                    publicKey: employer
                 }
             );
 
-            // Sign and send with Freighter
             const signedTx = await tx.signAndSend({
                 signTransaction: async (xdr: string) => {
                     return await signTransaction(xdr, { networkPassphrase: networks.testnet.networkPassphrase });
@@ -32,6 +29,31 @@ export const useContract = () => {
             return signedTx;
         } catch (error) {
             console.error("Görev oluşturulurken hata:", error);
+            throw error;
+        }
+    };
+
+    const acceptTask = async (task_id: number, workerPubKey: string) => {
+        try {
+            const client = new Client({
+                ...networks.testnet,
+                rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org",
+            });
+
+            const tx = await client.accept_task(
+                { task_id, worker: workerPubKey },
+                { publicKey: workerPubKey }
+            );
+
+            const signedTx = await tx.signAndSend({
+                signTransaction: async (xdr: string) => {
+                    return await signTransaction(xdr, { networkPassphrase: networks.testnet.networkPassphrase });
+                }
+            });
+
+            return signedTx;
+        } catch (error) {
+            console.error("Görev alınırken hata:", error);
             throw error;
         }
     };
@@ -93,14 +115,28 @@ export const useContract = () => {
                 rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org",
             });
 
-            // Read-only calls don't require signing/sending, we just simulate them to get the return value
             const { result } = await client.get_task({ task_id: taskId });
             return result;
         } catch (error) {
-            console.error("Veri çekilirken hata:", error);
-            throw error;
+            console.log("Görev bilgisi çekilemedi ID:", taskId);
+            return null;
         }
     };
 
-    return { createTask, submitTask, approveTask, getTask };
+    const getTaskCount = async () => {
+        try {
+            const client = new Client({
+                ...networks.testnet,
+                rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org",
+            });
+
+            const { result } = await client.get_task_count();
+            return Number(result);
+        } catch (error) {
+            console.error("Görev sayısı çekilemedi:", error);
+            return 0;
+        }
+    };
+
+    return { createTask, acceptTask, submitTask, approveTask, getTask, getTaskCount };
 };

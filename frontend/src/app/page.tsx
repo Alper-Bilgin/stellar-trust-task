@@ -1,45 +1,55 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import WalletConnect from "@/components/WalletConnect";
 import TaskCard from "@/components/TaskCard";
 import { useContract } from "@/hooks/useContract";
 import { requestAccess } from "@stellar/freighter-api";
-import { useEffect, useCallback } from "react";
+import { uploadJSONToPinata } from "@/utils/pinata";
 
 export default function Home() {
-  const [worker, setWorker] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [amount, setAmount] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
-  const [taskData, setTaskData] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
 
-  const { createTask, getTask } = useContract();
+  const { createTask, getTask, getTaskCount } = useContract();
 
-  // Sabit olarak 1 numaralı görevi çekiyoruz (şimdilik)
-  const fetchTask = useCallback(async () => {
+  const fetchAllTasks = useCallback(async () => {
     try {
-      const data = await getTask(1);
-      if (data) {
-        setTaskData({
-          taskId: 1,
-          employer: data.employer,
-          worker: data.worker,
-          amount: Number(data.amount) / 10_000_000, // Stroops to XLM
-          status: data.status,
-          evidenceHash: data.evidence_hash
-        });
+      const count = await getTaskCount();
+      const loadedTasks = [];
+
+      // Loop and fetch all tasks (1-indexed based on our contract logic)
+      for (let i = 1; i <= count; i++) {
+        const data = await getTask(i);
+        if (data) {
+          loadedTasks.push({
+            taskId: i,
+            employer: data.employer,
+            description_cid: data.description_cid,
+            worker: data.worker,
+            amount: Number(data.amount) / 10_000_000,
+            status: data.status,
+            evidenceHash: data.evidence_hash
+          });
+        }
       }
+
+      // Show newest tasks first
+      setTasks(loadedTasks.reverse());
     } catch (error) {
-      console.log("Görev henüz oluşturulmamış veya çekilemedi.");
+      console.log("Görevler çekilemedi:", error);
     }
-  }, [getTask]);
+  }, [getTask, getTaskCount]);
 
   useEffect(() => {
-    fetchTask();
-  }, [fetchTask]);
+    fetchAllTasks();
+  }, [fetchAllTasks]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!worker || !amount) return;
+    if (!title || !description || !amount) return;
 
     setLoading(true);
     try {
@@ -50,14 +60,19 @@ export default function Home() {
         return;
       }
 
-      await createTask(address, worker, Number(amount));
+      // 1. JSON Data'yı IPFS'e yükle
+      const jsonObj = { title, description };
+      const descriptionCid = await uploadJSONToPinata(jsonObj);
 
-      alert("Görev başarıyla oluşturuldu!");
-      setWorker("");
+      // 2. IPFS CID'si ile Kontratı çağır
+      await createTask(address, descriptionCid, Number(amount));
+
+      alert("Görev Market'e eklendi!");
+      setTitle("");
+      setDescription("");
       setAmount("");
 
-      // Görev oluşturulduktan sonra veriyi hemen güncelle
-      await fetchTask();
+      await fetchAllTasks();
     } catch (error) {
       console.error(error);
       alert("Görev oluşturulurken bir hata oluştu.");
@@ -67,61 +82,85 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white pb-10">
       <WalletConnect />
 
-      <main className="max-w-2xl mx-auto p-8 mt-10">
-        <h2 className="text-2xl font-bold mb-6 text-center">Yeni Görev Oluştur</h2>
+      <main className="max-w-4xl mx-auto p-8 mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Side: Create Form */}
+        <div>
+          <h2 className="text-2xl font-bold mb-6">Yeni Profil Görevi Oluştur</h2>
 
-        <form onSubmit={handleCreateTask} className="bg-gray-900 justify-center flex flex-col p-6 rounded-xl border border-gray-800 shadow-lg gap-4">
+          <form onSubmit={handleCreateTask} className="bg-gray-900 flex flex-col p-6 rounded-xl border border-gray-800 shadow-lg gap-4">
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-400">İşçi Adresi (Public Key)</label>
-            <input
-              type="text"
-              value={worker}
-              onChange={(e) => setWorker(e.target.value)}
-              className="bg-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="G... ile başlayan adres"
-              required
-            />
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-gray-400">Görev Başlığı</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="bg-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Örn: Logo Tasarımı"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-gray-400">Görev Detayları / Şartlar</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="bg-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                placeholder="Görevin neleri içermesi gerektiğini yazın..."
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-gray-400">Ödül (XLM)</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                className="bg-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Örn: 50"
+                min="1"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-lg transition"
+            >
+              {loading ? "Oluşturuluyor..." : "Markete Ekle"}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Side: Task Board */}
+        <div>
+          <h2 className="text-2xl border-b border-gray-800 pb-2 font-bold mb-6">Açık Görevler (Market)</h2>
+          <div className="flex flex-col gap-4">
+            {tasks.length === 0 ? (
+              <p className="text-gray-500 text-sm">Henüz sistemde bir görev yok.</p>
+            ) : (
+              tasks.map((task) => (
+                <TaskCard
+                  key={task.taskId}
+                  taskId={task.taskId}
+                  employer={task.employer}
+                  worker={task.worker}
+                  descriptionCid={task.description_cid}
+                  amount={task.amount}
+                  status={task.status}
+                  evidenceHash={task.evidenceHash}
+                  onRefresh={fetchAllTasks}
+                />
+              ))
+            )}
           </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-400">Ödül Miktarı (XLM)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              className="bg-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Örn: 100"
-              min="1"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-lg transition"
-          >
-            {loading ? "Oluşturuluyor..." : "Görevi Yayınla"}
-          </button>
-        </form>
-
-        {taskData && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4 text-center border-t border-gray-800 pt-8">Aktif Görevler</h2>
-            <TaskCard
-              taskId={taskData.taskId}
-              employer={taskData.employer}
-              worker={taskData.worker}
-              amount={taskData.amount}
-              status={taskData.status}
-              evidenceHash={taskData.evidenceHash} // Kanıt eklendiyse karta gönderebilirsiniz (opsiyonel)
-            />
-          </div>
-        )}
+        </div>
       </main>
     </div>
   );
