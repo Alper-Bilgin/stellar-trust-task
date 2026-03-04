@@ -15,7 +15,7 @@ interface TaskCardProps {
 }
 
 export default function TaskCard({ taskId, employer, descriptionCid, worker, amount, status, evidenceHash: initialEvidenceHash, onRefresh }: TaskCardProps) {
-    const { acceptTask, submitTask, approveTask } = useContract();
+    const { acceptTask, submitTask, approveTask, rejectTask } = useContract();
     const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
     const [evidenceHash, setEvidenceHash] = useState(initialEvidenceHash || "");
     const [loading, setLoading] = useState(false);
@@ -129,6 +129,36 @@ export default function TaskCard({ taskId, employer, descriptionCid, worker, amo
         }
     };
 
+    // İşveren Reddediyor (InReview => InProgress)
+    const handleReject = async () => {
+        setLoading(true);
+        try {
+            const { address, error } = await requestAccess();
+            if (error || !address) throw new Error("Cüzdan bağlanamadı.");
+
+            if (address !== employer) {
+                alert("Sadece görevi oluşturan işveren reddedebilir!");
+                setLoading(false);
+                return;
+            }
+
+            const confirmReject = window.confirm("Bu kanıtı reddetmek istediğinizden emin misiniz? İşçiden tekrar kanıt istenecektir.");
+            if (!confirmReject) {
+                setLoading(false);
+                return;
+            }
+
+            await rejectTask(taskId, address);
+            alert("Görev reddedildi ve Yapılıyor (In Progress) aşamasına geri gönderildi.");
+            onRefresh();
+        } catch (err: any) {
+            console.error(err);
+            alert("Reddedilirken hata oluştu.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-md w-full">
             <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
@@ -196,7 +226,7 @@ export default function TaskCard({ taskId, employer, descriptionCid, worker, amo
                 </div>
             )}
 
-            {/* STATUS 2: IN REVIEW (Kanıtı Görüntüle ve Onayla Butonu) */}
+            {/* STATUS 2: IN REVIEW (Kanıtı Görüntüle ve Onayla/Reddet Butonları) */}
             {status === 2 && (
                 <div className="flex flex-col gap-3 border-t border-gray-700 pt-4">
 
@@ -205,19 +235,29 @@ export default function TaskCard({ taskId, employer, descriptionCid, worker, amo
                             href={evidenceHash.startsWith("ipfs://") ? `https://gateway.pinata.cloud/ipfs/${evidenceHash.replace("ipfs://", "")}` : evidenceHash}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-center text-blue-400 hover:text-blue-300 underline text-sm mb-2"
+                            className="text-center text-blue-400 hover:text-blue-300 underline text-sm mb-2 p-3 bg-gray-800 rounded-lg flex items-center justify-center gap-2"
                         >
-                            🔗 İşçinin Yüklediği Kanıtı Görüntüle
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            İşçinin Yüklediği Kanıtı Görüntüle
                         </a>
                     )}
 
-                    <button
-                        onClick={handleApprove}
-                        disabled={loading}
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
-                    >
-                        {loading ? "İşleniyor..." : "İşi Onayla (Approve)"}
-                    </button>
+                    <div className="flex gap-4 mt-2">
+                        <button
+                            onClick={handleReject}
+                            disabled={loading}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 border border-red-500"
+                        >
+                            {loading ? "..." : "İşi Reddet ✖"}
+                        </button>
+                        <button
+                            onClick={handleApprove}
+                            disabled={loading}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 border border-green-500"
+                        >
+                            {loading ? "İşleniyor..." : "İşi Onayla ✔"}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

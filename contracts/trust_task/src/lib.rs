@@ -116,7 +116,25 @@ impl TrustTaskContract {
         env.storage().persistent().set(&task_id, &task);
     }
 
-    // 7. Belirli bir görev ID'sine göre veri çekme
+    // 7. İş Kanıtını Reddetme (İş Veren Tarafından)
+    pub fn reject_work(env: Env, task_id: u32) {
+        let mut task: Task = env.storage().persistent().get(&task_id).unwrap();
+        
+        // Sadece işveren reddedebilir
+        task.employer.require_auth();
+        
+        if task.status != TaskStatus::InReview {
+            panic!("Gorev incelemede degil");
+        }
+        
+        // Durumu geri al ve eski kanıtı temizle
+        task.status = TaskStatus::InProgress;
+        task.evidence_hash = String::from_str(&env, "");
+
+        env.storage().persistent().set(&task_id, &task);
+    }
+
+    // 8. Belirli bir görev ID'sine göre veri çekme
     pub fn get_task(env: Env, task_id: u32) -> Option<Task> {
         env.storage().persistent().get(&task_id)
     }

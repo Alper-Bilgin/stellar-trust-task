@@ -123,6 +123,31 @@ export const useContract = () => {
         }
     };
 
+    const rejectTask = async (task_id: number, employerPubKey: string) => {
+        try {
+            const client = new Client({
+                ...networks.testnet,
+                rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org",
+            });
+
+            const tx = await client.reject_work(
+                { task_id },
+                { publicKey: employerPubKey }
+            );
+
+            const signedTx = await tx.signAndSend({
+                signTransaction: async (xdr: string) => {
+                    return await signTransaction(xdr, { networkPassphrase: networks.testnet.networkPassphrase });
+                }
+            });
+
+            return signedTx;
+        } catch (error) {
+            console.error("Görev reddedilirken hata:", error);
+            throw error;
+        }
+    };
+
     const getTaskCount = async () => {
         try {
             const client = new Client({
@@ -138,5 +163,5 @@ export const useContract = () => {
         }
     };
 
-    return { createTask, acceptTask, submitTask, approveTask, getTask, getTaskCount };
+    return { createTask, acceptTask, submitTask, approveTask, rejectTask, getTask, getTaskCount };
 };
