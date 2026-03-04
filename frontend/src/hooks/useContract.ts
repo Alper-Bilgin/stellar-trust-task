@@ -86,5 +86,21 @@ export const useContract = () => {
         }
     };
 
-    return { createTask, submitTask, approveTask };
+    const getTask = async (taskId: number) => {
+        try {
+            const client = new Client({
+                ...networks.testnet,
+                rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org",
+            });
+
+            // Read-only calls don't require signing/sending, we just simulate them to get the return value
+            const { result } = await client.get_task({ task_id: taskId });
+            return result;
+        } catch (error) {
+            console.error("Veri çekilirken hata:", error);
+            throw error;
+        }
+    };
+
+    return { createTask, submitTask, approveTask, getTask };
 };

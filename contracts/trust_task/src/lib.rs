@@ -76,4 +76,10 @@ impl TrustTaskContract {
 
         env.storage().persistent().set(&task_id, &task);
     }
+
+    // 6. Belirli bir görev ID'sine göre veri çekme (Read-only)
+    pub fn get_task(env: Env, task_id: u32) -> Option<Task> {
+        // Persistent storage'dan veriyi çek, eğer yoksa None dön
+        env.storage().persistent().get(&task_id)
+    }
 }

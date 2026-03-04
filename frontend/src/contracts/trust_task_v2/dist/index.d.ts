@@ -1,13 +1,13 @@
 import { Buffer } from "buffer";
 import { AssembledTransaction, Client as ContractClient, ClientOptions as ContractClientOptions, MethodOptions } from "@stellar/stellar-sdk/contract";
-import type { u32, i128 } from "@stellar/stellar-sdk/contract";
+import type { u32, i128, Option } from "@stellar/stellar-sdk/contract";
 export * from "@stellar/stellar-sdk";
 export * as contract from "@stellar/stellar-sdk/contract";
 export * as rpc from "@stellar/stellar-sdk/rpc";
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CCPZ253M5RBP2YNEECC6EXIIAKDSTKY4UKO3ZDAUUGFT2DN75UNLR7JZ";
+        readonly contractId: "CDVBIWKLWDJY52AMKEVE6TIPNHUTL4LGVRQBZE27UE3CYHTU3AYXOZ7E";
     };
 };
 export interface Task {
@@ -23,6 +23,12 @@ export declare enum TaskStatus {
     Completed = 2
 }
 export interface Client {
+    /**
+     * Construct and simulate a get_task transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+     */
+    get_task: ({ task_id }: {
+        task_id: u32;
+    }, options?: MethodOptions) => Promise<AssembledTransaction<Option<Task>>>;
     /**
      * Construct and simulate a create_task transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
@@ -59,6 +65,7 @@ export declare class Client extends ContractClient {
     }): Promise<AssembledTransaction<T>>;
     constructor(options: ContractClientOptions);
     readonly fromJSON: {
+        get_task: (json: string) => AssembledTransaction<Option<Task>>;
         create_task: (json: string) => AssembledTransaction<number>;
         submit_work: (json: string) => AssembledTransaction<null>;
         approve_and_pay: (json: string) => AssembledTransaction<null>;

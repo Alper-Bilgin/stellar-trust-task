@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCPZ253M5RBP2YNEECC6EXIIAKDSTKY4UKO3ZDAUUGFT2DN75UNLR7JZ",
+    contractId: "CDVBIWKLWDJY52AMKEVE6TIPNHUTL4LGVRQBZE27UE3CYHTU3AYXOZ7E",
   }
 } as const
 
@@ -54,6 +54,11 @@ export enum TaskStatus {
 }
 
 export interface Client {
+  /**
+   * Construct and simulate a get_task transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_task: ({task_id}: {task_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<Option<Task>>>
+
   /**
    * Construct and simulate a create_task transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
@@ -89,6 +94,7 @@ export class Client extends ContractClient {
     super(
       new ContractSpec([ "AAAAAQAAAAAAAAAAAAAABFRhc2sAAAAFAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAAAAAACGVtcGxveWVyAAAAEwAAAAAAAAANZXZpZGVuY2VfaGFzaAAAAAAAABAAAAAAAAAABnN0YXR1cwAAAAAH0AAAAApUYXNrU3RhdHVzAAAAAAAAAAAABndvcmtlcgAAAAAAEw==",
         "AAAAAwAAAAAAAAAAAAAAClRhc2tTdGF0dXMAAAAAAAMAAAAAAAAABE9wZW4AAAAAAAAAAAAAAAhJblJldmlldwAAAAEAAAAAAAAACUNvbXBsZXRlZAAAAAAAAAI=",
+        "AAAAAAAAAAAAAAAIZ2V0X3Rhc2sAAAABAAAAAAAAAAd0YXNrX2lkAAAAAAQAAAABAAAD6AAAB9AAAAAEVGFzaw==",
         "AAAAAAAAAAAAAAALY3JlYXRlX3Rhc2sAAAAAAwAAAAAAAAAIZW1wbG95ZXIAAAATAAAAAAAAAAZ3b3JrZXIAAAAAABMAAAAAAAAABmFtb3VudAAAAAAACwAAAAEAAAAE",
         "AAAAAAAAAAAAAAALc3VibWl0X3dvcmsAAAAAAgAAAAAAAAAHdGFza19pZAAAAAAEAAAAAAAAAA1ldmlkZW5jZV9oYXNoAAAAAAAAEAAAAAA=",
         "AAAAAAAAAAAAAAAPYXBwcm92ZV9hbmRfcGF5AAAAAAEAAAAAAAAAB3Rhc2tfaWQAAAAABAAAAAA=" ]),
@@ -96,7 +102,8 @@ export class Client extends ContractClient {
     )
   }
   public readonly fromJSON = {
-    create_task: this.txFromJSON<u32>,
+    get_task: this.txFromJSON<Option<Task>>,
+        create_task: this.txFromJSON<u32>,
         submit_work: this.txFromJSON<null>,
         approve_and_pay: this.txFromJSON<null>
   }

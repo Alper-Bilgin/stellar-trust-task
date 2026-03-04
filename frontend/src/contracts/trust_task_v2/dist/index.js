@@ -10,7 +10,7 @@ if (typeof window !== "undefined") {
 export const networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CCPZ253M5RBP2YNEECC6EXIIAKDSTKY4UKO3ZDAUUGFT2DN75UNLR7JZ",
+        contractId: "CDVBIWKLWDJY52AMKEVE6TIPNHUTL4LGVRQBZE27UE3CYHTU3AYXOZ7E",
     }
 };
 export var TaskStatus;
@@ -29,12 +29,14 @@ export class Client extends ContractClient {
     constructor(options) {
         super(new ContractSpec(["AAAAAQAAAAAAAAAAAAAABFRhc2sAAAAFAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAAAAAACGVtcGxveWVyAAAAEwAAAAAAAAANZXZpZGVuY2VfaGFzaAAAAAAAABAAAAAAAAAABnN0YXR1cwAAAAAH0AAAAApUYXNrU3RhdHVzAAAAAAAAAAAABndvcmtlcgAAAAAAEw==",
             "AAAAAwAAAAAAAAAAAAAAClRhc2tTdGF0dXMAAAAAAAMAAAAAAAAABE9wZW4AAAAAAAAAAAAAAAhJblJldmlldwAAAAEAAAAAAAAACUNvbXBsZXRlZAAAAAAAAAI=",
+            "AAAAAAAAAAAAAAAIZ2V0X3Rhc2sAAAABAAAAAAAAAAd0YXNrX2lkAAAAAAQAAAABAAAD6AAAB9AAAAAEVGFzaw==",
             "AAAAAAAAAAAAAAALY3JlYXRlX3Rhc2sAAAAAAwAAAAAAAAAIZW1wbG95ZXIAAAATAAAAAAAAAAZ3b3JrZXIAAAAAABMAAAAAAAAABmFtb3VudAAAAAAACwAAAAEAAAAE",
             "AAAAAAAAAAAAAAALc3VibWl0X3dvcmsAAAAAAgAAAAAAAAAHdGFza19pZAAAAAAEAAAAAAAAAA1ldmlkZW5jZV9oYXNoAAAAAAAAEAAAAAA=",
             "AAAAAAAAAAAAAAAPYXBwcm92ZV9hbmRfcGF5AAAAAAEAAAAAAAAAB3Rhc2tfaWQAAAAABAAAAAA="]), options);
         this.options = options;
     }
     fromJSON = {
+        get_task: (this.txFromJSON),
         create_task: (this.txFromJSON),
         submit_work: (this.txFromJSON),
         approve_and_pay: (this.txFromJSON)
