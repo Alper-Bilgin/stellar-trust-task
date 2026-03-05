@@ -4,7 +4,7 @@
 
 It allows employers to post tasks to an open board with a cryptocurrency bounty (XLM), and enables workers to claim, complete, and submit proof of their work directly to IPFS for verification and automated blockchain payout.
 
-
+🔥 **Live Demo:** [https://stellar-trust-task.vercel.app/](https://stellar-trust-task.vercel.app/)
 ## 🚀 Features
 
 * **Open Marketplace:** Browse a public board of unassigned freelance tasks.
