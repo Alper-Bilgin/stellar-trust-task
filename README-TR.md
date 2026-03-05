@@ -4,8 +4,6 @@
 
 İşverenlerin kripto para ödülü (XLM) ile açık bir panoya görev eklemelerine, işçilerin bu görevleri üzerine almasına, tamamlamasına ve doğrudan IPFS'e kanıt yükleyerek otomatik blokzincir ödemesi almasına olanak tanır.
 
-![Stellar Trust Preview](https://i.imgur.com/G5vMwXX.png) <!-- *Buraya projenin ekran görüntüsünü koyabilirsiniz* -->
-
 ## 🚀 Özellikler
 
 * **Açık Pazar Yeri:** İşçisi henüz atanmamış freelance görevlerin olduğu genel bir ilan panosu.

@@ -4,7 +4,6 @@
 
 It allows employers to post tasks to an open board with a cryptocurrency bounty (XLM), and enables workers to claim, complete, and submit proof of their work directly to IPFS for verification and automated blockchain payout.
 
-![Stellar Trust Preview](https://i.imgur.com/G5vMwXX.png) <!-- *Placeholder for your actual screenshot* -->
 
 ## 🚀 Features
 
