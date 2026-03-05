@@ -44,8 +44,8 @@ export default function WalletConnect() {
           <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 shadow-lg shadow-sky-500/20">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white dark:text-gradient">
-            Stellar <span className="text-sky-500 dark:text-white font-light">Trust</span>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Stellar <span className="text-sky-600 dark:text-sky-500 font-light">Trust</span>
           </h1>
         </div>
 
@@ -67,8 +67,8 @@ export default function WalletConnect() {
           <button
             onClick={connect}
             className={`relative flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${address
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/20"
-                : "bg-slate-900 dark:bg-slate-800 text-white hover:-translate-y-0.5 shadow-lg dark:neon-border"
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/20"
+              : "bg-slate-900 dark:bg-slate-800 text-white hover:-translate-y-0.5 shadow-lg dark:neon-border"
               }`}
           >
             <Wallet className="w-4 h-4" />
